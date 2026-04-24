@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Compras Pro</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; padding: 10px; background-color: #f0f2f5; margin: 0; }
+        
+        .container { 
+            max-width: 500px; margin: auto; background: white; 
+            padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            position: relative; overflow: hidden;
+        }
+
+        .settings-icon { position: absolute; top: 10px; right: 10px; cursor: pointer; opacity: 0.4; }
+
+        h2 { color: #1a73e8; text-align: center; font-size: 1.2em; margin: 5px 0 15px 0; }
+        
+        /* CAJA DE PRESUPUESTO */
+        .total-box {
+            background: #27ae60; color: white; padding: 12px; border-radius: 8px;
+            text-align: center; margin-bottom: 15px; font-weight: bold; font-size: 1.1em;
+        }
+
+        /* FILA DE ENTRADA CORREGIDA */
+        .form-row { 
+            display: flex; gap: 8px; margin-bottom: 15px; 
+            background: #e8f0fe; padding: 10px; border-radius: 8px;
+            align-items: flex-end;
+        }
+
+        .input-group-busqueda { flex: 2; display: flex; flex-direction: column; min-width: 0; }
+        .input-group-stock { width: 80px; display: flex; flex-direction: column; flex-shrink: 0; }
+        
+        label { font-size: 0.7em; font-weight: bold; color: #1a73e8; margin-bottom: 3px; }
+        input { 
+            padding: 10px; border: 1px solid #acc8f1; border-radius: 6px; 
+            font-size: 16px; width: 100%; outline: none;
+        }
+        
+        .btn-print { 
+            cursor: pointer; border: none; border-radius: 6px; font-weight: bold; 
+            background-color: #34495e; color: white; width: 100%; 
+            padding: 10px; margin-bottom: 15px;
+        }
+        
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border-bottom: 1px solid #eee; padding: 8px 2px; text-align: left; }
+        th { background-color: #f1f3f4; font-size: 0.65em; color: #666; text-transform: uppercase; }
+
+        .prod-info { overflow: hidden; }
+        .prod-name { display: block; font-weight: bold; font-size: 0.85em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .prod-meta { font-size: 0.65em; color: #888; }
+
+        .btn-qty { 
+            background-color: #f1c40f; color: #000; border: none;
+            padding: 6px; border-radius: 4px; font-weight: bold; width: 100%; 
+            text-align: center; font-size: 0.9em; cursor: pointer;
+        }
+
+        .subtotal-txt { font-size: 0.85em; font-weight: bold; color: #2c3e50; }
+
+        .btn-delete { background-color: transparent; border: none; font-size: 1.1em; cursor: pointer; display: block; margin: auto; }
+
+        @media print {
+            .form-row, .btn-print, .btn-delete, .no-print, .settings-icon { display: none !important; }
+            .container { box-shadow: none; border: none; width: 100%; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="settings-icon no-print" onclick="configurarCSV()">⚙️</div>
+    <h2>🛒 Surtido de Tienda</h2>
+
+    <div class="total-box">
+        Total: $<span id="presupuestoTotal">0.00</span>
+    </div>
+    
+    <div class="form-row no-print">
+        <div class="input-group-busqueda">
+            <label>Producto / Código:</label>
+            <input type="text" id="codigo" list="listaSugerencias" placeholder="Buscar..." onchange="detectarSeleccion()">
+            <datalist id="listaSugerencias"></datalist>
+        </div>
+        <div class="input-group-stock">
+            <label>Stock:</label>
+            <input type="number" id="cantidad" placeholder="0" onkeydown="if(event.key==='Enter') verificarStock()">
+        </div>
+    </div>
+
+    <button class="btn-print no-print" onclick="window.print()">🖨️ Imprimir Pedido</button>
+
+    <table id="tablaCompras">
+        <thead>
+            <tr>
+                <th style="width: 45%;">Producto</th>
+                <th style="width: 18%;">Pedir</th>
+                <th style="width: 25%;">Subtotal</th>
+                <th style="width: 12%;" class="no-print"></th>
+            </tr>
+        </thead>
+        <tbody id="cuerpoTabla"></tbody>
+    </table>
+</div>
+
+<script>
+    // PRODUCTOS DE PRUEBA (Se usan si no hay CSV configurado)
+    const productosPrueba = {
+        "111": { nombre: "Leche Entera", pres: "1 Lt", costoActual: 22.50, stockMin: 6 },
+        "222": { nombre: "Huevo Blanco", pres: "1 Kg", costoActual: 45.00, stockMin: 5 },
+        "333": { nombre: "Aceite Cocina", pres: "900 ml", costoActual: 38.00, stockMin: 4 }
+    };
+
+    let productosDB = {};
+
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarDatosCSV();
+        actualizarVista();
+    });
+
+    function configurarCSV() {
+        const url = prompt("Enlace CSV de Google Sheets:", localStorage.getItem('csv_master_url') || "");
+        if (url !== null) {
+            localStorage.setItem('csv_master_url', url);
+            location.reload();
+        }
+    }
+
+    async function cargarDatosCSV() {
+        const url = localStorage.getItem('csv_master_url');
+        
+        // Si no hay URL, cargamos los de prueba
+        if (!url) {
+            productosDB = productosPrueba;
+            generarSugerencias();
+            return;
+        }
+
+        try {
+            const res = await fetch(url);
+            const data = await res.text();
+            const filas = data.split('\n').slice(1);
+            productosDB = {};
+
+            filas.forEach(f => {
+                const c = f.split(',');
+                if (c.length >= 5) {
+                    const cod = c[0].trim();
+                    productosDB[cod] = { 
+                        nombre: c[1].trim(), 
+                        pres: c[2].trim(), 
+                        costoActual: parseFloat(c[4].trim()) || 0, 
+                        stockMin: parseInt(c[6].trim()) || 0 
+                    };
+                }
+            });
+            generarSugerencias();
+        } catch (e) {
+            alert("Error al cargar CSV. Usando datos de prueba.");
+            productosDB = productosPrueba;
+            generarSugerencias();
+        }
+    }
+
+    function generarSugerencias() {
+        const datalist = document.getElementById('listaSugerencias');
+        datalist.innerHTML = "";
+        for (const cod in productosDB) {
+            let o1 = document.createElement('option'); o1.value = cod; o1.textContent = productosDB[cod].nombre;
+            let o2 = document.createElement('option'); o2.value = productosDB[cod].nombre;
+            datalist.appendChild(o1); datalist.appendChild(o2);
+        }
+    }
+
+    function detectarSeleccion() { setTimeout(() => document.getElementById('cantidad').focus(), 150); }
+
+    function verificarStock() {
+        const codInput = document.getElementById('codigo');
+        const cantInput = document.getElementById('cantidad');
+        let valor = codInput.value.trim();
+        let cant = parseInt(cantInput.value);
+
+        if (!valor || isNaN(cant)) return;
+
+        let id = productosDB[valor] ? valor : Object.keys(productosDB).find(k => productosDB[k].nombre.toLowerCase() === valor.toLowerCase());
+
+        if (id) {
+            const p = productosDB[id];
+            if (cant <= p.stockMin) {
+                const aSurtir = (p.stockMin * 2) - cant;
+                const item = { id: Date.now(), cod: id, nombre: p.nombre, pres: p.pres, cantidad: aSurtir, costo: p.costoActual };
+                
+                let pedido = JSON.parse(localStorage.getItem('pedido_final')) || [];
+                pedido.push(item);
+                localStorage.setItem('pedido_final', JSON.stringify(pedido));
+                actualizarVista();
+            } else {
+                alert("Stock suficiente.");
+            }
+            codInput.value = ""; cantInput.value = ""; codInput.focus();
+        } else {
+            alert("No encontrado.");
+        }
+    }
+
+    function actualizarVista() {
+        const tbody = document.getElementById('cuerpoTabla');
+        const pedido = JSON.parse(localStorage.getItem('pedido_final')) || [];
+        tbody.innerHTML = "";
+        let total = 0;
+
+        pedido.forEach(i => {
+            const sub = i.cantidad * i.costo;
+            total += sub;
+            const fila = document.createElement('tr');
+            fila.innerHTML = `
+                <td><div class="prod-info"><span class="prod-name">${i.nombre}</span><span class="prod-meta">${i.pres}</span></div></td>
+                <td><button class="btn-qty" onclick="cambiarCant(${i.id})">${i.cantidad}</button></td>
+                <td class="subtotal-txt">$${sub.toFixed(2)}</td>
+                <td class="no-print"><button class="btn-delete" onclick="borrar(${i.id})">🗑️</button></td>
+            `;
+            tbody.appendChild(fila);
+        });
+        document.getElementById('presupuestoTotal').innerText = total.toFixed(2);
+    }
+
+    function borrar(id) {
+        let pedido = JSON.parse(localStorage.getItem('pedido_final')) || [];
+        pedido = pedido.filter(x => x.id !== id);
+        localStorage.setItem('pedido_final', JSON.stringify(pedido));
+        actualizarVista();
+    }
+
+    function cambiarCant(id) {
+        let pedido = JSON.parse(localStorage.getItem('pedido_final')) || [];
+        const idx = pedido.findIndex(x => x.id === id);
+        if (idx !== -1) {
+            const n = prompt("Cantidad:", pedido[idx].cantidad);
+            if (n !== null && !isNaN(n)) {
+                pedido[idx].cantidad = parseInt(n);
+                localStorage.setItem('pedido_final', JSON.stringify(pedido));
+                actualizarVista();
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
