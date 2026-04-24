@@ -1,186 +1,210 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lista de Compras - Stock</title>
-  
-  <style>
-    /* Mantenemos tu diseño original pero con los nuevos colores */
-    :root {
-      --color-fondo: #2c3e50;    /* Azul Oscuro del Verificador */
-      --color-primario: #34495e; 
-      --color-acento: #2ecc71;   
-      --color-boton: #2980b9;    /* Azul del botón del Verificador */
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Compras Pro</title>
+    <style>
+        * { box-sizing: border-box; }
+        
+        /* 🎨 CAMBIO DE FONDO AL COLOR DEL VERIFICADOR */
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            padding: 15px; 
+            background-color: #2c3e50; 
+            margin: 0; 
+            min-height: 100vh;
+        }
+        
+        .container { 
+            max-width: 500px; 
+            margin: auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 20px; /* Bordes más redondeados como el verificador */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            position: relative; 
+            overflow: hidden;
+        }
 
-    body {
-      font-family: Arial, sans-serif;
-      background-color: var(--color-fondo);
-      margin: 0;
-      padding: 20px;
-      color: #333;
-    }
+        .settings-icon { 
+            position: absolute; 
+            top: 15px; 
+            right: 15px; 
+            cursor: pointer; 
+            opacity: 0.3; 
+            font-size: 1.2rem;
+        }
 
-    h1 {
-      text-align: center;
-      color: white; /* Blanco para que resalte sobre el azul */
-      margin-bottom: 20px;
-    }
+        /* Títulos sincronizados */
+        h2 { color: #34495e; text-align: center; font-size: 1.5em; margin: 5px 0 15px 0; font-weight: 800; }
+        
+        /* CAJA DE PRESUPUESTO (Verde Acento) */
+        .total-box {
+            background: #2ecc71; 
+            color: white; 
+            padding: 15px; 
+            border-radius: 12px;
+            text-align: center; 
+            margin-bottom: 20px; 
+            font-weight: bold; 
+            font-size: 1.3em;
+        }
 
-    /* Tu tabla original */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
+        /* FILA DE ENTRADA */
+        .form-row { 
+            display: flex; 
+            gap: 8px; 
+            margin-bottom: 15px; 
+            background: #f1f2f6; 
+            padding: 12px; 
+            border-radius: 12px;
+            align-items: flex-end;
+        }
 
-    th {
-      background-color: #f2f2f2;
-      color: var(--color-primario);
-      padding: 12px;
-      border-bottom: 2px solid #ddd;
-    }
+        .input-group-busqueda { flex: 2; display: flex; flex-direction: column; min-width: 0; }
+        .input-group-stock { width: 90px; display: flex; flex-direction: column; flex-shrink: 0; }
+        
+        label { font-size: 0.75em; font-weight: bold; color: #34495e; margin-bottom: 5px; }
+        
+        input { 
+            padding: 12px; 
+            border: 2px solid #dfe6e9; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            width: 100%; 
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus { border-color: #2980b9; }
+        
+        /* Botón de impresión (Azul Primario) */
+        .btn-print { 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 10px; 
+            font-weight: bold; 
+            background-color: #34495e; 
+            color: white; 
+            width: 100%; 
+            padding: 14px; 
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+        
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border-bottom: 1px solid #eee; padding: 10px 4px; text-align: left; }
+        th { background-color: #f8f9fa; font-size: 0.7em; color: #7f8c8d; text-transform: uppercase; }
 
-    td {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-      text-align: left;
-    }
+        .prod-info { overflow: hidden; }
+        .prod-name { display: block; font-weight: bold; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #2c3e50; }
+        .prod-meta { font-size: 0.75em; color: #7f8c8d; }
 
-    /* El resaltado de faltantes que te gustaba */
-    .faltante {
-      background-color: #ffeaa7; 
-      font-weight: bold;
-    }
+        /* Botón de cantidad (Acento Amarillo) */
+        .btn-qty { 
+            background-color: #f1c40f; 
+            color: #000; 
+            border: none;
+            padding: 8px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            width: 100%; 
+            text-align: center; 
+            font-size: 1rem; 
+            cursor: pointer;
+        }
 
-    .controles {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+        .subtotal-txt { font-size: 0.9em; font-weight: bold; color: #2ecc71; }
 
-    .btn-accion {
-      padding: 12px 25px;
-      font-size: 16px;
-      background-color: var(--color-boton);
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-      margin: 5px;
-    }
+        .btn-delete { background-color: transparent; border: none; font-size: 1.2rem; cursor: pointer; display: block; margin: auto; opacity: 0.6; }
+        .btn-delete:hover { opacity: 1; }
 
-    /* Icono de engranaje discreto */
-    .settings-icon {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      opacity: 0.3;
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.2rem;
-      cursor: pointer;
-    }
-  </style>
+        @media print {
+            body { background-color: white !important; padding: 0; }
+            .form-row, .btn-print, .btn-delete, .no-print, .settings-icon { display: none !important; }
+            .container { box-shadow: none; border: none; width: 100%; padding: 0; }
+        }
+    </style>
 </head>
 <body>
 
-  <button class="settings-icon" onclick="configurarURL()">⚙️</button>
+<div class="container">
+    <div class="settings-icon no-print" onclick="configurarCSV()">⚙️</div>
+    <h2>🛒 Surtido de Tienda</h2>
 
-  <h1>Lista de Compras</h1>
+    <div class="total-box">
+        Total: $<span id="presupuestoTotal">0.00</span>
+    </div>
+    
+    <div class="form-row no-print">
+        <div class="input-group-busqueda">
+            <label>Producto / Código:</label>
+            <input type="text" id="codigo" list="listaSugerencias" placeholder="Buscar..." onchange="detectarSeleccion()">
+            <datalist id="listaSugerencias"></datalist>
+        </div>
+        <div class="input-group-stock">
+            <label>En Tienda:</label>
+            <input type="number" id="cantidad" placeholder="0" onkeydown="if(event.key==='Enter') verificarStock()">
+        </div>
+    </div>
 
-  <div class="controles">
-    <button class="btn-accion" onclick="procesarInventario()">🔄 Actualizar Stock</button>
-    <button class="btn-accion" onclick="window.print()" style="background-color: var(--color-primario);">🖨️ Imprimir</button>
-  </div>
+    <button class="btn-print no-print" onclick="window.print()">🖨️ Imprimir Pedido</button>
 
-  <table id="tablaProductos">
-    <thead>
-      <tr>
-        <th>Producto</th>
-        <th>Presentación</th>
-        <th>Stock Actual</th>
-        <th>Mínimo</th>
-      </tr>
-    </thead>
-    <tbody id="cuerpoTabla">
-      </tbody>
-  </table>
+    <table id="tablaCompras">
+        <thead>
+            <tr>
+                <th style="width: 45%;">Producto</th>
+                <th style="width: 18%;">Pedir</th>
+                <th style="width: 25%;">Subtotal</th>
+                <th style="width: 12%;" class="no-print"></th>
+            </tr>
+        </thead>
+        <tbody id="cuerpoTabla"></tbody>
+    </table>
+</div>
 
-  <script>
-    // PRODUCTOS DE PRUEBA
-    const productosPrueba = [
-      { nombre: "Leche Entera", pres: "1 Litro", stock: 2, min: 5 },
-      { nombre: "Huevo Blanco", pres: "1 Kg", stock: 1, min: 3 },
-      { nombre: "Aceite", pres: "900 ml", stock: 4, min: 2 } // Este no saldría si solo filtramos faltantes
-    ];
+<script>
+    const productosPrueba = {
+        "111": { nombre: "Leche Entera", pres: "1 Lt", costoActual: 22.50, stockMin: 6 },
+        "222": { nombre: "Huevo Blanco", pres: "1 Kg", costoActual: 45.00, stockMin: 5 },
+        "333": { nombre: "Aceite Cocina", pres: "900 ml", costoActual: 38.00, stockMin: 4 }
+    };
 
-    function configurarURL() {
-      const url = prompt("Enlace CSV de Google Sheets:", localStorage.getItem('csv_master_url') || "");
-      if (url !== null) {
-        localStorage.setItem('csv_master_url', url);
-        location.reload();
-      }
+    let productosDB = {};
+
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarDatosCSV();
+        actualizarVista();
+    });
+
+    function configurarCSV() {
+        const url = prompt("Enlace CSV de Google Sheets:", localStorage.getItem('csv_master_url') || "");
+        if (url !== null) {
+            localStorage.setItem('csv_master_url', url);
+            location.reload();
+        }
     }
 
-    async function procesarInventario() {
-      const urlCSV = localStorage.getItem('csv_master_url');
-      const cuerpo = document.getElementById("cuerpoTabla");
-      cuerpo.innerHTML = "";
+    async function cargarDatosCSV() {
+        const url = localStorage.getItem('csv_master_url');
+        if (!url) {
+            productosDB = productosPrueba;
+            generarSugerencias();
+            return;
+        }
 
-      if (!urlCSV) {
-        renderizar(productosPrueba.filter(p => p.stock <= p.min));
-        return;
-      }
+        try {
+            const res = await fetch(url);
+            const data = await res.text();
+            const filas = data.split(/\r?\n/).filter(f => f.trim() !== "").slice(1);
+            productosDB = {};
 
-      try {
-        const respuesta = await fetch(urlCSV);
-        const datos = await respuesta.text();
-        const filas = datos.split(/\r?\n/).filter(f => f.trim() !== "").slice(1);
-        let faltantes = [];
-
-        filas.forEach(linea => {
-          const c = linea.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-          if (c.length >= 7) {
-            const stockActual = parseInt(c[5]) || 0;
-            const stockMinimo = parseInt(c[6]) || 0;
-
-            if (stockActual <= stockMinimo) {
-              faltantes.push({
-                nombre: c[1].replace(/"/g, '').trim(),
-                pres: c[2].replace(/"/g, '').trim(),
-                stock: stockActual,
-                min: stockMinimo
-              });
-            }
-          }
-        });
-        renderizar(faltantes);
-      } catch (e) {
-        renderizar(productosPrueba.filter(p => p.stock <= p.min));
-      }
-    }
-
-    function renderizar(lista) {
-      const cuerpo = document.getElementById("cuerpoTabla");
-      if (lista.length === 0) {
-        cuerpo.innerHTML = "<tr><td colspan='4' style='text-align:center;'>✅ Todo en orden</td></tr>";
-        return;
-      }
-      lista.forEach(p => {
-        const tr = document.createElement("tr");
-        tr.className = "faltante";
-        tr.innerHTML = `<td>${p.nombre}</td><td>${p.pres}</td><td>${p.stock}</td><td>${p.min}</td>`;
-        cuerpo.appendChild(tr);
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', procesarInventario);
-  </script>
-</body>
-</html>
+            filas.forEach(f => {
+                const c = f.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (c.length >= 5) {
+                    const cod = c[0].replace(/"/g, '').trim();
+                    productosDB[cod] = { 
+                        nombre: c[1].replace(/"/g, '').trim(), 
+                        pres: c[2].replace(/"/g, '').trim(), 
+                        costoActual: parseFloat(c[4].trim()) || 0, 
+                        stockMin: parseInt(c[6].trim())
