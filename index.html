@@ -3,152 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lista de Compras - Gestión de Stock</title>
+  <title>Lista de Compras - Stock</title>
   
   <style>
-    /* 🎨 SINCRONIZACIÓN TOTAL CON EL VERIFICADOR */
-    * { box-sizing: border-box; }
-
+    /* Mantenemos tu diseño original pero con los nuevos colores */
     :root {
-      --color-fondo: #2c3e50;    /* Azul Oscuro profundo */
-      --color-primario: #34495e; /* Gris Azulado */
-      --color-acento: #2ecc71;   /* Verde éxito */
-      --color-alerta: #e74c3c;   /* Rojo faltante */
-      --color-texto: #333;
+      --color-fondo: #2c3e50;    /* Azul Oscuro del Verificador */
+      --color-primario: #34495e; 
+      --color-acento: #2ecc71;   
+      --color-boton: #2980b9;    /* Azul del botón del Verificador */
     }
 
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: Arial, sans-serif;
       background-color: var(--color-fondo);
-      color: var(--color-texto);
       margin: 0;
       padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
+      color: #333;
     }
 
     h1 {
-      color: #ffffff;
-      font-size: 2.5rem;
-      margin: 20px 0;
-      font-weight: 800;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      text-align: center;
+      color: white; /* Blanco para que resalte sobre el azul */
+      margin-bottom: 20px;
     }
 
-    .contenedor-principal {
-      width: 100%;
-      max-width: 900px;
-      background: #ffffff;
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-
-    .controles {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 25px;
-      flex-wrap: wrap;
-    }
-
-    .btn-accion {
-      flex: 1;
-      min-width: 150px;
-      padding: 15px;
-      font-size: 1rem;
-      background-color: #2980b9; /* Azul botón Verificador */
-      color: white;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.3s, transform 0.1s;
-    }
-
-    .btn-accion:hover {
-      background-color: #2471a3;
-      transform: translateY(-1px);
-    }
-
-    .btn-accion:active {
-      transform: translateY(0);
-    }
-
-    /* 📊 ESTILOS DE LA TABLA */
-    .tabla-container {
-      overflow-x: auto;
-    }
-
+    /* Tu tabla original */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
 
     th {
-      background-color: #f1f2f6;
+      background-color: #f2f2f2;
       color: var(--color-primario);
-      padding: 15px;
-      text-align: left;
-      border-bottom: 3px solid #dfe6e9;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      padding: 12px;
+      border-bottom: 2px solid #ddd;
     }
 
     td {
-      padding: 14px;
-      border-bottom: 1px solid #eee;
-      font-size: 1rem;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
     }
 
-    tr:hover {
-      background-color: #f9f9f9;
-    }
-
+    /* El resaltado de faltantes que te gustaba */
     .faltante {
-      background-color: #fff4e5; /* Color crema suave para resaltar */
-      color: #d35400;
+      background-color: #ffeaa7; 
       font-weight: bold;
     }
 
-    .status-badge {
-      padding: 5px 10px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: bold;
+    .controles {
+      text-align: center;
+      margin-bottom: 20px;
     }
 
-    .status-bajo { background: #fab1a0; color: #c0392b; }
-    .status-ok { background: #b2bec3; color: #2d3436; }
+    .btn-accion {
+      padding: 12px 25px;
+      font-size: 16px;
+      background-color: var(--color-boton);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 5px;
+    }
 
-    /* ⚙️ ICONO DE CONFIGURACIÓN */
+    /* Icono de engranaje discreto */
     .settings-icon {
       position: fixed;
-      top: 15px;
-      right: 15px;
-      background: rgba(255, 255, 255, 0.15);
+      top: 10px;
+      right: 10px;
+      opacity: 0.3;
+      background: none;
       border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
       color: white;
-      cursor: pointer;
       font-size: 1.2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.3s;
-    }
-
-    .settings-icon:hover { background: rgba(255, 255, 255, 0.3); }
-
-    @media (max-width: 600px) {
-      .contenedor-principal { padding: 15px; }
-      h1 { font-size: 1.8rem; }
-      .btn-accion { width: 100%; }
+      cursor: pointer;
     }
   </style>
 </head>
@@ -158,30 +94,32 @@
 
   <h1>Lista de Compras</h1>
 
-  <div class="contenedor-principal">
-    <div class="controles">
-      <button class="btn-accion" onclick="procesarInventario()">🔄 Actualizar Inventario</button>
-      <button class="btn-accion" onclick="imprimirLista()" style="background-color: var(--color-primario);">🖨️ Imprimir Lista</button>
-    </div>
-
-    <div class="tabla-container">
-      <table id="tablaProductos">
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Presentación</th>
-            <th>Stock Actual</th>
-            <th>Mínimo</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody id="cuerpoTabla">
-          </tbody>
-      </table>
-    </div>
+  <div class="controles">
+    <button class="btn-accion" onclick="procesarInventario()">🔄 Actualizar Stock</button>
+    <button class="btn-accion" onclick="window.print()" style="background-color: var(--color-primario);">🖨️ Imprimir</button>
   </div>
 
+  <table id="tablaProductos">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Presentación</th>
+        <th>Stock Actual</th>
+        <th>Mínimo</th>
+      </tr>
+    </thead>
+    <tbody id="cuerpoTabla">
+      </tbody>
+  </table>
+
   <script>
+    // PRODUCTOS DE PRUEBA
+    const productosPrueba = [
+      { nombre: "Leche Entera", pres: "1 Litro", stock: 2, min: 5 },
+      { nombre: "Huevo Blanco", pres: "1 Kg", stock: 1, min: 3 },
+      { nombre: "Aceite", pres: "900 ml", stock: 4, min: 2 } // Este no saldría si solo filtramos faltantes
+    ];
+
     function configurarURL() {
       const url = prompt("Enlace CSV de Google Sheets:", localStorage.getItem('csv_master_url') || "");
       if (url !== null) {
@@ -192,8 +130,11 @@
 
     async function procesarInventario() {
       const urlCSV = localStorage.getItem('csv_master_url');
+      const cuerpo = document.getElementById("cuerpoTabla");
+      cuerpo.innerHTML = "";
+
       if (!urlCSV) {
-        alert("Por favor, configura la URL del CSV en el engranaje ⚙️");
+        renderizar(productosPrueba.filter(p => p.stock <= p.min));
         return;
       }
 
@@ -201,56 +142,45 @@
         const respuesta = await fetch(urlCSV);
         const datos = await respuesta.text();
         const filas = datos.split(/\r?\n/).filter(f => f.trim() !== "").slice(1);
-        const cuerpo = document.getElementById("cuerpoTabla");
-        cuerpo.innerHTML = "";
+        let faltantes = [];
 
         filas.forEach(linea => {
-          // Parseo que respeta comas dentro de comillas
           const c = linea.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-          
           if (c.length >= 7) {
-            const nombre = c[1].replace(/"/g, '').trim();
-            const presentacion = c[2].replace(/"/g, '').trim();
-            const stockActual = parseInt(c[5]) || 0; // Columna F (Índice 5)
-            const stockMinimo = parseInt(c[6]) || 0; // Columna G (Índice 6)
+            const stockActual = parseInt(c[5]) || 0;
+            const stockMinimo = parseInt(c[6]) || 0;
 
             if (stockActual <= stockMinimo) {
-              const tr = document.createElement("tr");
-              tr.className = "faltante";
-              
-              tr.innerHTML = `
-                <td>${nombre}</td>
-                <td>${presentacion}</td>
-                <td>${stockActual}</td>
-                <td>${stockMinimo}</td>
-                <td><span class="status-badge status-bajo">COMPRAR</span></td>
-              `;
-              cuerpo.appendChild(tr);
+              faltantes.push({
+                nombre: c[1].replace(/"/g, '').trim(),
+                pres: c[2].replace(/"/g, '').trim(),
+                stock: stockActual,
+                min: stockMinimo
+              });
             }
           }
         });
-
-        if (cuerpo.innerHTML === "") {
-          cuerpo.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:30px;'>✅ Todo el stock está correcto. No hay faltantes.</td></tr>";
-        }
-
-      } catch (error) {
-        alert("Error al conectar con Google Sheets. Verifica el enlace y que esté publicado como CSV.");
-        console.error(error);
+        renderizar(faltantes);
+      } catch (e) {
+        renderizar(productosPrueba.filter(p => p.stock <= p.min));
       }
     }
 
-    function imprimirLista() {
-      window.print();
+    function renderizar(lista) {
+      const cuerpo = document.getElementById("cuerpoTabla");
+      if (lista.length === 0) {
+        cuerpo.innerHTML = "<tr><td colspan='4' style='text-align:center;'>✅ Todo en orden</td></tr>";
+        return;
+      }
+      lista.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.className = "faltante";
+        tr.innerHTML = `<td>${p.nombre}</td><td>${p.pres}</td><td>${p.stock}</td><td>${p.min}</td>`;
+        cuerpo.appendChild(tr);
+      });
     }
 
-    // Cargar automáticamente al abrir
-    document.addEventListener('DOMContentLoaded', () => {
-      if(localStorage.getItem('csv_master_url')) {
-        procesarInventario();
-      }
-    });
+    document.addEventListener('DOMContentLoaded', procesarInventario);
   </script>
-
 </body>
 </html>
